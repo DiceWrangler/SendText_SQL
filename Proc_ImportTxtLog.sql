@@ -1,0 +1,219 @@
+/*
+	Proc_ImportTxtLog.sql
+*/
+
+if object_id('dbo.ImportTxtLog', 'P') is not null
+	drop procedure dbo.ImportTxtLog;
+go
+
+
+create procedure dbo.ImportTxtLog
+as begin
+
+set NOCOUNT ON;  -- disable display of intermediate row count
+
+declare
+	@TextTypeID as int,
+	@Subject as varchar(100),
+	@TextMessage as varchar(250),
+	@SentByID as int,
+	@SendDate as date,
+	@Priority as char(1),
+	@Schedule as datetime,
+	@TextTo as varchar(50),
+	@TextToEmail as varchar(150),
+	@Text_Batch_ID as int,
+	@First_Attempt as int,
+	@Last_TextTo as varchar(50),
+	@Last_TextToEmail as varchar(150),
+	@BatchesCreated as int = 0,
+	@MessagesCreated as int = 0,
+	@BatchStatus as char(1),
+	@BATCH_STATUS_CREATED as char(1) = 'C',
+	@BATCH_STATUS_QUEUED as char(1) = 'Q',
+	@BATCH_STATUS_PRIORITY as char(1) = 'P',
+	@TenantID as int,
+	@AssetID as int
+
+
+declare cTB cursor
+for select
+	TL.TextTypeID,
+	TL.Subject,
+	TL.TextMessage,
+	TL.SentByID,
+	convert(date, TL.SendDate) as 'SendDate',
+	TL.SendTextPriority,
+	TL.SendTextSchedule
+from BPMCO.dbo.tblTextLog TL
+where
+	TL.SendTextImport is NULL -- only unimported messages
+group by
+	TL.TextTypeID,
+	TL.Subject,
+	TL.TextMessage,
+	TL.SentByID,
+	convert(date, TL.SendDate),
+	TL.SendTextPriority,
+	TL.SendTextSchedule
+order by
+	SendDate;
+
+
+open cTB;
+
+
+fetch next from cTB into
+	@TextTypeID,
+	@Subject,
+	@TextMessage,
+	@SentByID,
+	@SendDate,
+	@Priority,
+	@Schedule;
+
+-- select @TextTypeID, @Subject, @TextMessage, @SentByID, @SendDate, @Priority, @Schedule; -- DEBUG
+
+while @@FETCH_STATUS = 0 begin
+
+	begin transaction;
+
+	insert into SendText.dbo.Text_Batch (
+		TxtBat_Text_Type_ID,
+		TxtBat_Subject,
+		TxtBat_Text_Message,
+		TxtBat_Sent_By_User_ID,
+		TxtBat_Created_Time,
+		TxtBat_Scheduled_Time,
+		TxtBat_Batch_Status )
+	values (
+		@TextTypeID,
+		@Subject,
+		@TextMessage,
+		@SentByID,
+		@SendDate,
+		@Schedule,
+		@BATCH_STATUS_CREATED );  -- Batch is not ready yet
+
+	set @Text_Batch_ID = @@IDENTITY;
+-- select @Text_Batch_ID; -- DEBUG
+
+	set @BatchesCreated = @BatchesCreated + 1;
+
+	set	@First_Attempt = -1;  -- always first attempt if starting a new batch
+	set	@Last_TextTo = '';
+	set	@Last_TextToEmail = '';
+
+	declare cTM cursor 
+	for select
+		TL.TextTo,
+		TL.TextToEmail,
+		TL.TenantID,
+		TL.AssetID
+	from BPMCO.dbo.tblTextLog TL
+	where
+		TL.TextTypeID = @TextTypeID and
+		TL.Subject = @Subject and
+		TL.TextMessage = @TextMessage and
+		TL.SentByID = @SentByID and
+		convert(date, TL.SendDate) = @SendDate and
+		TL.SendTextImport is NULL
+	order by
+		TL.SendDate,
+		TL.TextTo,
+		TL.TextToEmail
+	for update of TL.SendTextImport;
+
+	open cTM;
+
+	fetch next from cTM into
+		@TextTo,
+		@TextToEmail,
+		@TenantID,
+		@AssetID;
+
+-- select @TextTo, @TextToEmail; -- DEBUG
+
+	while @@FETCH_STATUS = 0 begin
+
+		if @First_Attempt = 0 begin
+			if (@TextTo != @Last_TextTo) or (@TextToEmail != @Last_TextToEmail) begin
+				set	@First_Attempt = -1;
+				set @Last_TextTo = '';
+				set @Last_TextToEmail = '';
+			end
+		end
+
+		if @First_Attempt != 0 begin
+
+			insert into SendText.dbo.Text_Message (
+				TxtMsg_Text_Batch_ID,
+				TxtMsg_Text_To,
+				TxtMsg_Text_To_Email,
+				TxtMsg_Tenant_ID,
+				TxtMsg_Asset_ID )
+			values (
+				@Text_Batch_ID,
+				@TextTo,
+				@TextToEmail,
+				@TenantID,
+				@AssetID );
+
+			set @First_Attempt = 0;
+			set @Last_TextTo = @TextTo;
+			set @Last_TextToEmail = @TextToEmail;
+
+			set @MessagesCreated = @MessagesCreated + 1;
+
+		end
+
+		update BPMCO.dbo.tblTextLog set
+			SendTextImport = getdate()
+		where
+			current of cTM;
+
+		fetch next from cTM into
+			@TextTo,
+			@TextToEmail,
+			@TenantID,
+			@AssetID;
+
+	end;
+
+	close cTM;
+	deallocate cTM;
+
+	if upper(isnull(@Priority, 'N')) = 'Y'
+		set @BatchStatus = @BATCH_STATUS_PRIORITY
+	else
+		set @BatchStatus = @BATCH_STATUS_QUEUED;
+
+	update SendText.dbo.Text_Batch set
+		TxtBat_Batch_Status = @BatchStatus -- Batch is now ready for processing
+	where
+		TxtBat_Text_Batch_ID = @Text_Batch_ID;
+
+	commit transaction;
+
+	fetch next from cTB into
+		@TextTypeID,
+		@Subject,
+		@TextMessage,
+		@SentByID,
+		@SendDate,
+		@Priority,
+		@Schedule;
+
+end;
+
+
+close cTB;
+deallocate cTB;
+
+select
+	@BatchesCreated as 'BatchesCreated',
+	@MessagesCreated as 'MessagesCreated';
+
+end
+go
+
