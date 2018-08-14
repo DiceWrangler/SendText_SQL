@@ -15,13 +15,16 @@ BEGIN
 
 	select
 		isnull(SU.NameFirst + ' ' + SU.NameLast, '') as 'FullName',
-		isnull(SU.Email, '') as 'Email',
+--		isnull(SU.Email, '') as 'Email',
+		isnull(E.EmailAddress, '') as 'Email',
 		case SU.ActiveEmployee
 			when 1 then 'Y'
 			else 'N'
 		end as 'ActiveEmployee'
 
 	from BPMCO.dbo.tblSecurityUsers SU
+	left outer join BPMCO.dbo.tblEmployee E on
+		E.EmployeeID = SU.employeeId
 	where
 		SU.UserNameID = @UserID;
 
