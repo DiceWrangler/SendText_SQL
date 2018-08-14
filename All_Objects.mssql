@@ -803,8 +803,8 @@ GO
 	Trig_Text_Batch_Log.sql
 */
 
-if object_id('TR_Text_Batch_Log', 'U') is not null
-	drop table Text_Batch_Log;
+if object_id('TR_Text_Batch_Log', 'TR') is not null
+	drop trigger TR_Text_Batch_Log;
 go
 
 create trigger TR_Text_Batch_Log on Text_Batch
@@ -816,8 +816,8 @@ go
 	Trig_Text_Message_Log.sql
 */
 
-if object_id('TR_Text_Message_Log', 'U') is not null
-	drop table Text_Message_Log;
+if object_id('TR_Text_Message_Log', 'TR') is not null
+	drop table TR_Text_Message_Log;
 go
 
 create trigger TR_Text_Message_Log on Text_Message
