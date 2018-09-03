@@ -25,19 +25,19 @@ declare
 
 			from App_Status
 			where
-				AppSta_App_Name = 'SendText' and
+				AppSta_App_Name = @AppName and
 				AppSta_App_Status = 'Running' and
 				AppSta_Timestamp > (
 					select max(AppSta_Timestamp)
 					from App_Status
 					where
-						AppSta_App_Name = 'SendText' and
+						AppSta_App_Name = @AppName and
 						AppSta_App_Status = 'Starting' ) and
 				AppSta_Timestamp > (
 					select max(AppSta_Timestamp)
 					from App_Status
 					where
-						AppSta_App_Name = 'SendText' and
+						AppSta_App_Name = @AppName and
 						AppSta_App_Status = 'Stopping' ));
 
 		if @LastHeartbeatID is null
