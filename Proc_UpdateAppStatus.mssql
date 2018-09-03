@@ -1,0 +1,45 @@
+/*
+	Proc_UpdateAppStatus.sql
+*/
+
+if object_id('dbo.UpdateAppStatus', 'P') is not null
+	drop procedure dbo.UpdateAppStatus;
+GO
+
+
+CREATE PROCEDURE dbo.UpdateAppStatus
+	@AppName varchar(50),
+	@AppStatus varchar(50)
+AS
+BEGIN
+	SET NOCOUNT ON;
+
+	if @AppStatus != 'Running'
+
+		insert into App_Status (
+			AppSta_App_Name,
+			AppSta_App_Status,
+			AppSta_Timestamp
+		) values (
+			@AppName,
+			@AppStatus,
+			getdate()
+		);
+
+	else
+
+/* replace this with "upsert" logic */
+
+		insert into App_Status (
+			AppSta_App_Name,
+			AppSta_App_Status,
+			AppSta_Timestamp
+		) values (
+			@AppName,
+			@AppStatus,
+			getdate()
+		);
+
+END
+GO
+

@@ -1,0 +1,16 @@
+/*
+	Table_App_Status.sql
+*/
+
+if object_id('App_Status', 'U') is not null
+	drop table App_Status;
+go
+
+
+CREATE TABLE App_Status(
+	AppSta_App_Status_ID int NOT NULL identity(1,1),
+	AppSta_App_Name varchar(50) NOT NULL,
+	AppSta_App_Status varchar(50) NOT NULL,
+	AppSta_Timestamp datetime NULL
+);
+GO
