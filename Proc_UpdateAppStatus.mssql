@@ -14,31 +14,60 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	if @AppStatus != 'Running'
+declare 
+	@LastHeartbeatID as int
+
+	if @AppStatus = 'Running' begin
+
+		set @LastHeartbeatID = (
+			select
+				max(AppSta_App_Status_ID)
+
+			from App_Status
+			where
+				AppSta_App_Name = 'SendText' and
+				AppSta_App_Status = 'Running' and
+				AppSta_Timestamp > (
+					select max(AppSta_Timestamp)
+					from App_Status
+					where
+						AppSta_App_Name = 'SendText' and
+						AppSta_App_Status = 'Starting' ) and
+				AppSta_Timestamp > (
+					select max(AppSta_Timestamp)
+					from App_Status
+					where
+						AppSta_App_Name = 'SendText' and
+						AppSta_App_Status = 'Stopping' ));
+
+		if @LastHeartbeatID is null
+
+			insert into App_Status (
+				AppSta_App_Name,
+				AppSta_App_Status,
+				AppSta_Timestamp
+			) values (
+				@AppName,
+				@AppStatus,
+				getdate()
+			);
+
+		else 
+
+			update App_Status set AppSta_Timestamp = getdate()
+			where AppSta_App_Status_ID = @LastHeartbeatID;
+
+	end else 
 
 		insert into App_Status (
-			AppSta_App_Name,
-			AppSta_App_Status,
-			AppSta_Timestamp
-		) values (
-			@AppName,
-			@AppStatus,
-			getdate()
-		);
-
-	else
-
-/* replace this with "upsert" logic */
-
-		insert into App_Status (
-			AppSta_App_Name,
-			AppSta_App_Status,
-			AppSta_Timestamp
-		) values (
-			@AppName,
-			@AppStatus,
-			getdate()
-		);
+				AppSta_App_Name,
+				AppSta_App_Status,
+				AppSta_Timestamp
+			) values (
+				@AppName,
+				@AppStatus,
+				getdate()
+			);
 
 END
 GO
