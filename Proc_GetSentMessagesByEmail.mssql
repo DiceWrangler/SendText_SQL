@@ -27,7 +27,7 @@ select
 from Text_Message TM
 join Text_Batch TB on TB.TxtBat_Text_Batch_ID = TM.TxtMsg_Text_Batch_ID
 where
-	TxtMsg_Text_To_Email = @EmailAddress and
+	TxtMsg_Text_To_Email like '%' + @EmailAddress + '%' and
 	TxtMsg_Finished_Time is NOT NULL
 order by
 	TxtMsg_Finished_Time desc;
