@@ -21,6 +21,7 @@ select
 	TxtMsg_Finished_Time as 'SentTime',
 	isnull(TxtMsg_Tenant_ID, 0) as 'TenantID',
 	isnull(TxtMsg_Asset_ID, 0) as 'AssetID',
+	TxtMsg_Text_To_Email as 'TextToEmail',
 	isnull(TxtBat_Subject, '') as 'SubjectLine',
 	isnull(TxtBat_Text_Message, '') as 'BodyText'
 
