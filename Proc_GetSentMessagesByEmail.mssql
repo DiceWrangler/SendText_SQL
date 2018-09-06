@@ -13,7 +13,7 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-select
+select top 100   -- NOTE: Maximum of 100 rows returned
 	TxtMsg_Text_Message_ID as 'MessageID',
 	TxtMsg_Text_Batch_ID as 'BatchID',
 	isnull(TxtBat_Text_Type_ID, 0) as 'TextTypeID',
