@@ -1,0 +1,38 @@
+/*
+	Script_MigrateTxtLog.sql
+*/
+
+declare
+	@SendDate as date,
+	@StatusMessage as varchar(50);
+	
+declare cSD cursor for
+	select 
+		convert(date, SendDate)
+	from BPMCO.dbo.tblTextLog
+	where
+		SendTextImport = '2000-01-01'
+	group by
+		convert(date, SendDate)
+	order by
+		convert(date, SendDate);
+
+open cSD;
+
+fetch next from cSD into
+	@SendDate;
+
+while @@FETCH_STATUS = 0 begin
+
+	set @StatusMessage = 'Migrating: ' + cast(@SendDate as varchar(10));
+	print @StatusMessage;
+	
+	exec SendText.dbo.MigrateTxtLog @SendDate;
+	
+	fetch next from cSD into
+		@SendDate;
+	
+end;
+
+close cSD;
+deallocate cSD;
