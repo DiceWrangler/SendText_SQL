@@ -1,0 +1,28 @@
+/*
+	Proc_GetAppStatus.sql
+*/
+
+if object_id('dbo.GetAppStatus', 'P') is not null
+	drop procedure dbo.GetAppStatus;
+GO
+
+
+CREATE PROCEDURE dbo.GetAppStatus
+	@AppName varchar(50)
+AS
+BEGIN
+	SET NOCOUNT ON;
+
+select top 1
+	AppSta_App_Status,
+	AppSta_Timestamp
+
+from App_Status
+where
+	AppSta_App_Name = @AppName
+order by
+	AppSta_Timestamp desc;
+
+END
+GO
+
