@@ -15,7 +15,7 @@ set NOCOUNT ON;  -- disable display of intermediate row count
 declare
 	@TextTypeID as int,
 	@Subject as varchar(100),
-	@TextMessage as varchar(250),
+	@TextMessage as varchar(max),
 	@SentByID as int,
 	@SendDate as date,
 	@Priority as char(1),
