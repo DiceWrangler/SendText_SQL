@@ -11,7 +11,7 @@ CREATE TABLE Text_Batch(
 	TxtBat_Text_Batch_ID int NOT NULL identity(1,1),
 	TxtBat_Text_Type_ID int NULL,
 	TxtBat_Subject varchar(100) NULL,
-	TxtBat_Text_Message varchar(250) NULL,
+	TxtBat_Text_Message varchar(max) NULL,
 	TxtBat_Sent_By_User_ID int NULL,
 	TxtBat_Batch_Status char(1) NULL CONSTRAINT DF_TxtBat_Batch_Status DEFAULT 'C',
 	TxtBat_Created_Time datetime NULL CONSTRAINT DF_TxtBat_Created_Time DEFAULT getdate(),
