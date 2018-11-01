@@ -8,7 +8,8 @@ GO
 
 
 CREATE PROCEDURE dbo.GetAppStatus
-	@AppName varchar(50)
+	@AppName varchar(50),
+	@AppStatus varchar(50) = null
 AS
 BEGIN
 	SET NOCOUNT ON;
@@ -19,7 +20,8 @@ select top 1
 
 from App_Status
 where
-	AppSta_App_Name = @AppName
+	AppSta_App_Name = @AppName and
+	(AppSta_App_Status = @AppStatus or @AppStatus is null)
 order by
 	AppSta_Timestamp desc;
 
